@@ -28,12 +28,17 @@ import org.spongepowered.asm.mixin.injection.callback.LocalCapture;
 import java.util.Random;
 
 @Mixin(EndermanEntity.PickUpBlockGoal.class)
-public class EndermanPickupTweak {
+public abstract class EndermanPickupTweak {
     @Shadow @Final
     private EndermanEntity enderman;
 
     @Inject(method = "tick", at = @At(value = "INVOKE", target = "Lnet/minecraft/block/BlockState;isIn(Lnet/minecraft/tag/Tag;)Z"), cancellable = true, locals = LocalCapture.CAPTURE_FAILHARD)
     public void tick(CallbackInfo ci, Random random, World world, int i, int j, int k, BlockPos blockPos, BlockState blockState, Vec3d vec3d, Vec3d vec3d2, BlockHitResult blockHitResult, boolean bl) {
+        BlockPos underneath = new BlockPos(i, this.enderman.getY()-1, k);
+        if (EndermanPickupValidator.isValid(world.getBlockState(underneath).getBlock()) && ConfigLoader.ENDERMAN_ALLOW_PICKUP_UNDERNEATH.get()) {
+            blockPos = underneath;
+            blockState = world.getBlockState(underneath);
+        }
         if (EndermanPickupValidator.isValid(blockState.getBlock())) {
             if (blockState.getBlock() instanceof BlockEntityProvider && ConfigLoader.ENDERMAN_ALLOW_BLOCKENTITIES.get()) {
                 BlockEntity blockEntity = world.getBlockEntity(blockPos);
@@ -56,6 +61,7 @@ public class EndermanPickupTweak {
                 }
             }
             world.removeBlock(blockPos, false);
+            this.enderman.setCarriedBlock(blockState);
         } else {
             ci.cancel();
         }

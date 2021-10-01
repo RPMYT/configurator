@@ -28,6 +28,7 @@ public class ConfigLoader {
     public static final SemifinalValue<String> ENDERMAN_FALLBACK = new SemifinalValue<>("deny");
     public static final SemifinalValue<Boolean> ENDERMAN_ALLOW_UNBREAKABLES = new SemifinalValue<>(false);
     public static final SemifinalValue<Boolean> ENDERMAN_ALLOW_BLOCKENTITIES = new SemifinalValue<>(true);
+    public static final SemifinalValue<Boolean> ENDERMAN_ALLOW_PICKUP_UNDERNEATH = new SemifinalValue<>(true);
 
     public static void load() {}
 
@@ -116,6 +117,13 @@ public class ConfigLoader {
                                                     JsonElement element = item.getValue();
                                                     if (element.isJsonPrimitive() && element.getAsJsonPrimitive().isBoolean()) {
                                                         ENDERMAN_ALLOW_UNBREAKABLES.set(element.getAsBoolean());
+                                                    }
+                                                }
+
+                                                case "allow_pickup_underneath" -> {
+                                                    JsonElement element = item.getValue();
+                                                    if (element.isJsonPrimitive() && element.getAsJsonPrimitive().isBoolean()) {
+                                                        ENDERMAN_ALLOW_PICKUP_UNDERNEATH.set(element.getAsBoolean());
                                                     }
                                                 }
                                             }
