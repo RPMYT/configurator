@@ -1,0 +1,15 @@
+{
+  "required": true,
+  "package": "net.lilydev.configurator.mixin",
+  "compatibilityLevel": "JAVA_16",
+  "mixins": [
+    "EndermanBlockDataStorage",
+    "EndermanPickupTweak",
+    "EndermanPlaceTweak"
+  ],
+  "client": [],
+  "server": [],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}
