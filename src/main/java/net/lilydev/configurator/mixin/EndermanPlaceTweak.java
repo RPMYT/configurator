@@ -1,20 +1,21 @@
 package net.lilydev.configurator.mixin;
 
 import net.lilydev.configurator.util.BlockDataStorage;
-import net.minecraft.block.Block;
 import net.minecraft.block.BlockEntityProvider;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.entity.mob.EndermanEntity;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.MathHelper;
 import net.minecraft.world.World;
 import net.minecraft.world.event.GameEvent;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import org.spongepowered.asm.mixin.injection.callback.LocalCapture;
 
 import java.util.Random;
 
@@ -27,36 +28,22 @@ public abstract class EndermanPlaceTweak {
     @Shadow
     protected abstract boolean canPlaceOn(World world, BlockPos posAbove, BlockState carriedState, BlockState stateAbove, BlockState state, BlockPos pos);
 
-    /**
-     * @author PrismaticYT
-     */
-    @Overwrite
-    public void tick() {
-        Random random = this.enderman.getRandom();
-        World world = this.enderman.world;
-        int targetX = MathHelper.floor(this.enderman.getX() - 1.0D + random.nextDouble() * 2.0D);
-        int targetY = MathHelper.floor(this.enderman.getY() + random.nextDouble() * 2.0D);
-        int targetZ = MathHelper.floor(this.enderman.getZ() - 1.0D + random.nextDouble() * 2.0D);
-        BlockPos targetPos = new BlockPos(targetX, targetY, targetZ);
-        BlockState targetState = world.getBlockState(targetPos);
-        BlockPos underTargetPos = targetPos.down();
-        BlockState underTargetState = world.getBlockState(underTargetPos);
-        BlockState carriedState = this.enderman.getCarriedBlock();
-        if (carriedState != null) {
-            carriedState = Block.postProcessState(carriedState, this.enderman.world, targetPos);
-            if (this.canPlaceOn(world, targetPos, carriedState, targetState, underTargetState, underTargetPos)) {
-                world.setBlockState(targetPos, carriedState, 3);
-                world.emitGameEvent(this.enderman, GameEvent.BLOCK_PLACE, targetPos);
-                if (this.enderman.getCarriedBlock().hasBlockEntity()) {
-                    NbtCompound data = ((BlockDataStorage) this.enderman).readBlockData();
-                    BlockEntity blockEntity = ((BlockEntityProvider) this.enderman.getCarriedBlock().getBlock()).createBlockEntity(targetPos, carriedState);
-                    if (blockEntity != null) {
-                        blockEntity.readNbt(data);
-                        world.addBlockEntity(blockEntity);
-                    }
+    @Inject(method = "tick", at = @At(value = "INVOKE", target = "Lnet/minecraft/block/Block;postProcessState(Lnet/minecraft/block/BlockState;Lnet/minecraft/world/WorldAccess;Lnet/minecraft/util/math/BlockPos;)Lnet/minecraft/block/BlockState;"), cancellable = true, locals = LocalCapture.CAPTURE_FAILHARD)
+    public void tick(CallbackInfo ci, Random random, World world, int i, int j, int k, BlockPos blockPos, BlockState blockState, BlockPos blockPos2, BlockState blockState2, BlockState blockState3) {
+        if (this.canPlaceOn(world, blockPos, blockState3, blockState, blockState2, blockPos2)) {
+            world.setBlockState(blockPos, blockState3, 3);
+            world.emitGameEvent(this.enderman, GameEvent.BLOCK_PLACE, blockPos);
+            if (this.enderman.getCarriedBlock() != null && this.enderman.getCarriedBlock().hasBlockEntity()) {
+                NbtCompound data = ((BlockDataStorage) this.enderman).readBlockData();
+                BlockEntity blockEntity = ((BlockEntityProvider) this.enderman.getCarriedBlock().getBlock()).createBlockEntity(blockPos, blockState3);
+                if (blockEntity != null) {
+                    blockEntity.readNbt(data);
+                    world.addBlockEntity(blockEntity);
                 }
-                this.enderman.setCarriedBlock(null);
             }
+            this.enderman.setCarriedBlock(null);
+        } else {
+            ci.cancel();
         }
     }
 }

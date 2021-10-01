@@ -1,4 +1,4 @@
-package net.lilydev.configurator;
+package net.lilydev.configurator.util;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
@@ -7,6 +7,7 @@ import com.google.gson.JsonParser;
 import com.google.gson.JsonSyntaxException;
 import com.google.gson.stream.JsonReader;
 import net.fabricmc.loader.api.FabricLoader;
+import net.lilydev.configurator.Configurator;
 import net.lilydev.configurator.util.SemifinalValue;
 import net.minecraft.block.Block;
 import net.minecraft.util.Identifier;
@@ -25,6 +26,7 @@ public class ConfigLoader {
     public static final ArrayList<Block> ENDERMAN_WHITELIST = new ArrayList<>();
     public static final ArrayList<Block> ENDERMAN_BLACKLIST = new ArrayList<>();
     public static final SemifinalValue<String> ENDERMAN_FALLBACK = new SemifinalValue<>("deny");
+    public static final SemifinalValue<Boolean> ENDERMAN_ALLOW_UNBREAKABLES = new SemifinalValue<>(false);
     public static final SemifinalValue<Boolean> ENDERMAN_ALLOW_BLOCKENTITIES = new SemifinalValue<>(true);
 
     public static void load() {}
@@ -103,10 +105,17 @@ public class ConfigLoader {
                                                     }
                                                 }
 
-                                                case "serialize_block_entities" -> {
+                                                case "allow_block_entities" -> {
                                                     JsonElement element = item.getValue();
                                                     if (element.isJsonPrimitive() && element.getAsJsonPrimitive().isBoolean()) {
                                                         ENDERMAN_ALLOW_BLOCKENTITIES.set(element.getAsBoolean());
+                                                    }
+                                                }
+
+                                                case "allow_unbreakable_blocks" -> {
+                                                    JsonElement element = item.getValue();
+                                                    if (element.isJsonPrimitive() && element.getAsJsonPrimitive().isBoolean()) {
+                                                        ENDERMAN_ALLOW_UNBREAKABLES.set(element.getAsBoolean());
                                                     }
                                                 }
                                             }

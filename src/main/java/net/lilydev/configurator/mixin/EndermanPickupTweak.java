@@ -1,7 +1,8 @@
 package net.lilydev.configurator.mixin;
 
-import net.lilydev.configurator.ConfigLoader;
+import net.lilydev.configurator.util.ConfigLoader;
 import net.lilydev.configurator.util.BlockDataStorage;
+import net.lilydev.configurator.util.EndermanPickupValidator;
 import net.minecraft.block.BlockEntityProvider;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.entity.BlockEntity;
@@ -11,18 +12,18 @@ import net.minecraft.inventory.Inventory;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.nbt.NbtList;
-import net.minecraft.tag.BlockTags;
 import net.minecraft.util.collection.DefaultedList;
 import net.minecraft.util.hit.BlockHitResult;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.Vec3d;
-import net.minecraft.world.RaycastContext;
 import net.minecraft.world.World;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import org.spongepowered.asm.mixin.injection.callback.LocalCapture;
 
 import java.util.Random;
 
@@ -31,26 +32,11 @@ public class EndermanPickupTweak {
     @Shadow @Final
     private EndermanEntity enderman;
 
-    /**
-     * @author PrismaticyT
-     */
-    @Overwrite
-    public void tick() {
-        Random random = this.enderman.getRandom();
-        World world = this.enderman.world;
-        int targetX = MathHelper.floor(this.enderman.getX() - 2.0D + random.nextDouble() * 4.0D);
-        int targetY = MathHelper.floor(this.enderman.getY() + random.nextDouble() * 3.0D);
-        int targetZ = MathHelper.floor(this.enderman.getZ() - 2.0D + random.nextDouble() * 4.0D);
-        BlockPos targetPos = new BlockPos(targetX, targetY, targetZ);
-        BlockState targetState = world.getBlockState(targetPos);
-        Vec3d vec3d = new Vec3d((double)this.enderman.getBlockX() + 0.5D, (double) targetY + 0.5D, (double)this.enderman.getBlockZ() + 0.5D);
-        Vec3d vec3d2 = new Vec3d((double) targetX + 0.5D, (double) targetY + 0.5D, (double) targetZ + 0.5D);
-        BlockHitResult result = world.raycast(new RaycastContext(vec3d, vec3d2, RaycastContext.ShapeType.OUTLINE, RaycastContext.FluidHandling.NONE, this.enderman));
-        boolean bl = result.getBlockPos().equals(targetPos);
-        if (!ConfigLoader.ENDERMAN_BLACKLIST.contains(targetState.getBlock()) && ConfigLoader.ENDERMAN_FALLBACK.get().equals("allow") || (!ConfigLoader.ENDERMAN_FALLBACK.get().equals("allow") && !ConfigLoader.ENDERMAN_FALLBACK.get().equals("deny")) && targetState.isIn(BlockTags.ENDERMAN_HOLDABLE) && bl || ConfigLoader.ENDERMAN_WHITELIST.contains(targetState.getBlock())) {
-            this.enderman.setCarriedBlock(targetState);
-            if (targetState.getBlock() instanceof BlockEntityProvider provider && ConfigLoader.ENDERMAN_ALLOW_BLOCKENTITIES.get()) {
-                BlockEntity blockEntity = world.getBlockEntity(targetPos);
+    @Inject(method = "tick", at = @At(value = "INVOKE", target = "Lnet/minecraft/block/BlockState;isIn(Lnet/minecraft/tag/Tag;)Z"), cancellable = true, locals = LocalCapture.CAPTURE_FAILHARD)
+    public void tick(CallbackInfo ci, Random random, World world, int i, int j, int k, BlockPos blockPos, BlockState blockState, Vec3d vec3d, Vec3d vec3d2, BlockHitResult blockHitResult, boolean bl) {
+        if (EndermanPickupValidator.isValid(blockState.getBlock())) {
+            if (blockState.getBlock() instanceof BlockEntityProvider && ConfigLoader.ENDERMAN_ALLOW_BLOCKENTITIES.get()) {
+                BlockEntity blockEntity = world.getBlockEntity(blockPos);
                 if (blockEntity != null) {
                     NbtCompound data = blockEntity.writeNbt(new NbtCompound());
                     if (blockEntity instanceof Inventory inventory) {
@@ -66,10 +52,12 @@ public class EndermanPickupTweak {
                         }
                     }
                     ((BlockDataStorage) this.enderman).writeBlockData(data);
-                    world.removeBlockEntity(targetPos);
+                    world.removeBlockEntity(blockPos);
                 }
             }
-            world.removeBlock(targetPos, false);
+            world.removeBlock(blockPos, false);
+        } else {
+            ci.cancel();
         }
     }
 }

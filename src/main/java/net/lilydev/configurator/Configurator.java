@@ -1,6 +1,7 @@
 package net.lilydev.configurator;
 
 import net.fabricmc.api.ModInitializer;
+import net.lilydev.configurator.util.ConfigLoader;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
