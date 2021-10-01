@@ -30,19 +30,23 @@ public abstract class EndermanPlaceTweak {
 
     @Inject(method = "tick", at = @At(value = "INVOKE", target = "Lnet/minecraft/block/Block;postProcessState(Lnet/minecraft/block/BlockState;Lnet/minecraft/world/WorldAccess;Lnet/minecraft/util/math/BlockPos;)Lnet/minecraft/block/BlockState;"), cancellable = true, locals = LocalCapture.CAPTURE_FAILHARD)
     public void tick(CallbackInfo ci, Random random, World world, int i, int j, int k, BlockPos blockPos, BlockState blockState, BlockPos blockPos2, BlockState blockState2, BlockState blockState3) {
+        // check if the block can be placed
         if (this.canPlaceOn(world, blockPos, blockState3, blockState, blockState2, blockPos2)) {
             world.setBlockState(blockPos, blockState3, 3);
             world.emitGameEvent(this.enderman, GameEvent.BLOCK_PLACE, blockPos);
+            // check if the carried block is a block entity
             if (this.enderman.getCarriedBlock() != null && this.enderman.getCarriedBlock().hasBlockEntity()) {
                 NbtCompound data = ((BlockDataStorage) this.enderman).readBlockData();
                 BlockEntity blockEntity = ((BlockEntityProvider) this.enderman.getCarriedBlock().getBlock()).createBlockEntity(blockPos, blockState3);
                 if (blockEntity != null) {
+                    // add the block entity to the world
                     blockEntity.readNbt(data);
                     world.addBlockEntity(blockEntity);
                 }
             }
             this.enderman.setCarriedBlock(null);
         } else {
+            // it can't be placed; cancel the operation
             ci.cancel();
         }
     }
