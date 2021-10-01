@@ -28,17 +28,22 @@ public class ConfigLoader {
     /**
      * The list of blocks endermen are explicitly allowed to pick up.
      */
-    public static final ArrayList<Block> ENDERMAN_WHITELIST = new ArrayList<>();
+    public static final ArrayList<Block> ENDERMAN_PICKUP_WHITELIST = new ArrayList<>();
 
     /**
      * The list of blocks endermen are explicitly <i>dis</i>allowed to pick up.
      */
-    public static final ArrayList<Block> ENDERMAN_BLACKLIST = new ArrayList<>();
+    public static final ArrayList<Block> ENDERMAN_PICKUP_BLACKLIST = new ArrayList<>();
+
+    /**
+     * The list of blocks that prevent endermen from despawning while they are being carried.
+     */
+    public static final ArrayList<Block> ENDERMAN_DESPAWN_BLACKLIST = new ArrayList<>();
 
     /**
      * The default behaviour for picking up blocks - set this to neither "deny" nor "allow" to use the default logic.
      */
-    public static final SemifinalValue<String> ENDERMAN_FALLBACK = new SemifinalValue<>("deny");
+    public static final SemifinalValue<String> ENDERMAN_FALLBACK_BEHAVIOUR = new SemifinalValue<>("deny");
 
     /**
      * Whether or not to allow endermen to pick up unbreakable blocks (blocks with a hardness of '3600000.0F' specifically).
@@ -54,6 +59,7 @@ public class ConfigLoader {
      * Whether or not to allow endermen to pick up blocks underneath them.
      */
     public static final SemifinalValue<Boolean> ENDERMAN_ALLOW_PICKUP_UNDERNEATH = new SemifinalValue<>(true);
+
 
     // does nothing, only for invoking static class initializer
     public static void load() {}
@@ -108,7 +114,7 @@ public class ConfigLoader {
                                                             if (identifier.isJsonPrimitive() && identifier.getAsJsonPrimitive().isString()) {
                                                                 // get the block from it's registry key
                                                                 Block block = Registry.BLOCK.get(Identifier.tryParse(identifier.getAsString()));
-                                                                ENDERMAN_WHITELIST.add(block);
+                                                                ENDERMAN_PICKUP_WHITELIST.add(block);
                                                             }
                                                         }
                                                     } else {
@@ -123,11 +129,26 @@ public class ConfigLoader {
                                                             if (identifier.isJsonPrimitive() && identifier.getAsJsonPrimitive().isString()) {
                                                                 // get the block from it's registry key
                                                                 Block block = Registry.BLOCK.get(Identifier.tryParse(identifier.getAsString()));
-                                                                ENDERMAN_BLACKLIST.add(block);
+                                                                ENDERMAN_PICKUP_BLACKLIST.add(block);
                                                             }
                                                         }
                                                     } else {
                                                         throw new JsonSyntaxException("Expected 'modules.enderman.pickup_blacklist' key to be an array!");
+                                                    }
+                                                }
+
+                                                case "despawn_blacklist" -> {
+                                                    JsonElement element = item.getValue();
+                                                    if (element instanceof JsonArray array) {
+                                                        for (JsonElement identifier : array) {
+                                                            if (identifier.isJsonPrimitive() && identifier.getAsJsonPrimitive().isString()) {
+                                                                // get the block from it's registry key
+                                                                Block block = Registry.BLOCK.get(Identifier.tryParse(identifier.getAsString()));
+                                                                ENDERMAN_DESPAWN_BLACKLIST.add(block);
+                                                            }
+                                                        }
+                                                    } else {
+                                                        throw new JsonSyntaxException("Expected 'modules.enderman.despawn_blacklist' key to be an array!");
                                                     }
                                                 }
 
@@ -136,7 +157,7 @@ public class ConfigLoader {
                                                 case "pickup_fallback" -> {
                                                     JsonElement element = item.getValue();
                                                     if (element.isJsonPrimitive() && element.getAsJsonPrimitive().isString()) {
-                                                        ENDERMAN_FALLBACK.set(element.getAsString());
+                                                        ENDERMAN_FALLBACK_BEHAVIOUR.set(element.getAsString());
                                                     }
                                                 }
 

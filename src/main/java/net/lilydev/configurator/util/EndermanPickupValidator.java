@@ -3,7 +3,6 @@ package net.lilydev.configurator.util;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockEntityProvider;
 import net.minecraft.block.BlockRenderType;
-import net.minecraft.block.Blocks;
 import net.minecraft.tag.BlockTags;
 
 public class EndermanPickupValidator {
@@ -29,19 +28,19 @@ public class EndermanPickupValidator {
      * @return Whether or not the block can be picked up.
      */
     public static boolean isValid(Block block) {
-        if (ConfigLoader.ENDERMAN_BLACKLIST.contains(block)) {
+        if (ConfigLoader.ENDERMAN_PICKUP_BLACKLIST.contains(block)) {
             return false;
         }
 
-        if (!ConfigLoader.ENDERMAN_WHITELIST.contains(block) && ConfigLoader.ENDERMAN_FALLBACK.get().equals("deny")) {
+        if (!ConfigLoader.ENDERMAN_PICKUP_WHITELIST.contains(block) && ConfigLoader.ENDERMAN_FALLBACK_BEHAVIOUR.get().equals("deny")) {
             return false;
         }
 
-        if (ConfigLoader.ENDERMAN_WHITELIST.contains(block)) {
+        if (ConfigLoader.ENDERMAN_PICKUP_WHITELIST.contains(block)) {
             return true;
         }
 
-        if (!ConfigLoader.ENDERMAN_BLACKLIST.contains(block) && ConfigLoader.ENDERMAN_FALLBACK.get().equals("allow")) {
+        if (!ConfigLoader.ENDERMAN_PICKUP_BLACKLIST.contains(block) && ConfigLoader.ENDERMAN_FALLBACK_BEHAVIOUR.get().equals("allow")) {
             return true;
         }
 
@@ -53,11 +52,11 @@ public class EndermanPickupValidator {
             return false;
         }
 
-        if (ConfigLoader.ENDERMAN_FALLBACK.get().equals("allow")) {
+        if (ConfigLoader.ENDERMAN_FALLBACK_BEHAVIOUR.get().equals("allow")) {
             return true;
         }
 
-        if (ConfigLoader.ENDERMAN_FALLBACK.get().equals("deny")) {
+        if (ConfigLoader.ENDERMAN_FALLBACK_BEHAVIOUR.get().equals("deny")) {
             return false;
         }
 

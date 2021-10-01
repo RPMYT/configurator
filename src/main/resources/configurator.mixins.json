@@ -4,6 +4,7 @@
   "compatibilityLevel": "JAVA_16",
   "mixins": [
     "EndermanBlockDataStorage",
+    "EndermanDespawnMixin",
     "EndermanPickupTweak",
     "EndermanPlaceTweak"
   ],

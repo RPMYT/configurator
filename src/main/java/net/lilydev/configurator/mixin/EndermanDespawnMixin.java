@@ -1,5 +1,6 @@
 package net.lilydev.configurator.mixin;
 
+import net.lilydev.configurator.util.ConfigLoader;
 import net.minecraft.block.BlockState;
 import net.minecraft.entity.mob.EndermanEntity;
 import org.jetbrains.annotations.Nullable;
@@ -14,11 +15,16 @@ public abstract class EndermanDespawnMixin {
     @Shadow @Nullable public abstract BlockState getCarriedBlock();
 
     /**
-     * Allows despawning unless this {@code EndermanEntity} is carrying a {@code BlockEntity}.
+     * Allows despawning unless either a {@code BlockEntity} or a block in the despawn blacklist is being carried.
      * <br> This deviates from the normal behaviour of disallowing despawning if any block is being carried.
      */
     @Inject(method = "cannotDespawn", at = @At("HEAD"), cancellable = true)
     private void allowDespawning(CallbackInfoReturnable<Boolean> cir) {
-        cir.setReturnValue(this.getCarriedBlock() != null && this.getCarriedBlock().hasBlockEntity());
+        if (this.getCarriedBlock() != null) {
+            if (this.getCarriedBlock().hasBlockEntity() || ConfigLoader.ENDERMAN_DESPAWN_BLACKLIST.contains(this.getCarriedBlock().getBlock())) {
+                cir.setReturnValue(true);
+            }
+            cir.setReturnValue(false);
+        }
     }
 }
